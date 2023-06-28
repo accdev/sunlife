@@ -4,6 +4,10 @@
         <application>Financial_Services_App</application>
         <visible>true</visible>
     </applicationVisibilities>
+    <classAccesses>
+        <apexClass>AccountController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
     <description>Sunlife</description>
     <hasActivationRequired>false</hasActivationRequired>
     <label>Financial Services</label>

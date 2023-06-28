@@ -1,11 +1,27 @@
 public with sharing class AccountController {
 
     @AuraEnabled(cacheable=true)
-    public static Object getFinancialAccounts(String searchByNameTerm){
+    public static Object getFinancialAccounts(String searchByNameTerm) {
         try {
             Map<String, Object> res = new Map<String, Object>();
+            List<Object> rows = new List<Object>();
 
-            res.put('rows', getFinancialServicesAccountsList(searchByNameTerm ));
+            for(Account account : getFinancialServicesAccountsList(searchByNameTerm)) {
+                rows.add(
+                    new Map<String, Object>{
+                        'id' => account.Id,
+                        'name' => account.Name,
+                        'recordUrl' => '/' + account.Id,
+                        'ownerId' => account.OwnerId,
+                        'ownerName' => account.Owner.Name,
+                        'phone' => account.Phone,
+                        'website' => account.Website,
+                        'annualRevenue' => account.AnnualRevenue
+                    }
+                );
+            }
+
+            res.put('rows', rows);
             //TODO: res.put('columns', getFinancialServicesAccountsColumns());
 
             return res; 
