@@ -8,6 +8,10 @@
         <members>Financial_Services_App</members>
         <name>CustomApplication</name>
     </types>
+        <types>
+        <members>Account</members>
+        <name>StandardObject</name>
+    </types>
     <types>
         <members>*</members>
         <name>CustomTab</name>
