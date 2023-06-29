@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
     <types>
-        <members>*</members>
+        <members>AccountController</members>
         <name>ApexClass</name>
     </types>
     <types>
@@ -18,19 +18,19 @@
     </types>
     <types>
         <members>*</members>
-        <name>ApexTestSuite</name>
-    </types>
-    <types>
-        <members>*</members>
         <name>LightningComponentBundle</name>
     </types>
     <types>
-        <members>*</members>
+        <members>Financial_Services_Account_Listing</members>
         <name>FlexiPage</name>
     </types>
         <types>
         <members>Financial_Services</members>
         <name>PermissionSet</name>
+    </types>
+    <types>
+        <members>Financial_Services</members>
+        <name>Profile</name>
     </types>
     <version>57.0</version>
 </Package>

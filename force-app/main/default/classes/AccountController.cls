@@ -5,7 +5,7 @@ public with sharing class AccountController {
         try {
             Map<String, Object> res = new Map<String, Object>();
             List<Object> rows = new List<Object>();
-
+            res.put('rows', rows);
 
             Map<Id, Account> accountsMap = getFinancialServicesAccountsMap(searchByNameTerm);
             Set<Id> editableAccounts = getEditableAccountIds(accountsMap.keySet());
@@ -16,7 +16,6 @@ public with sharing class AccountController {
                         'id' => account.Id,
                         'name' => account.Name,
                         'recordUrl' => '/' + account.Id,
-                        'ownerId' => account.OwnerId,
                         'ownerName' => account.Owner.Name,
                         'phone' => account.Phone,
                         'website' => account.Website,
@@ -25,52 +24,54 @@ public with sharing class AccountController {
                     }
                 );
             }
-            res.put('rows', rows);
-            //TODO: res.put('columns', getFinancialServicesAccountsColumns());// just in case we want load columns definition from the backend
 
             return res; 
         } catch (Exception e) {
             AuraHandledException ahEx = new AuraHandledException(e.getMessage());
-            ahEx.setMessage(e.getMessage());
+            ahEx.setMessage(e.getMessage());// to display real error message, not a 'Script-thrown exception'
             throw ahEx;
         }
     }
-
+    /**
+     * returns Map of Financial Services accounts
+     */
     @TestVisible
     static Map<Id, Account> getFinancialServicesAccountsMap(String searchByNameTerm) {
         searchByNameTerm = '%' + searchByNameTerm + '%';
         return new  Map<Id, Account>([
-            select
+            SELECT
                     Name,
-                    OwnerId,
                     Owner.Name,
                     Phone,
                     Website, 
                     AnnualRevenue
-            from
+            FROM
                     Account
-            where
+            WHERE
                     Industry = 'Financial Services'
-                and
+                AND
                     Name like :searchByNameTerm
-            with    SECURITY_ENFORCED
-            limit   2000
-            for     VIEW
+            WITH    SECURITY_ENFORCED
+            LIMIT   2000
+            FOR     VIEW
         ]);
     }
 
+    /**
+     * returns set of account Ids which user can edit
+     */
     @TestVisible
     static Set<Id> getEditableAccountIds(Set<Id> accountsIds) {
         return new Map<Id, UserRecordAccess>([
-            select 
+            SELECT 
                     RecordId 
-            from 
+            FROM 
                     UserRecordAccess 
-            where 
+            WHERE 
                     UserId = :UserInfo.getUserId() 
-                and 
+                AND 
                     HasEditAccess = true 
-                and 
+                AND 
                     RecordId in :accountsIds
         ]).keySet();
     }

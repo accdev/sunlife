@@ -1,51 +1,59 @@
-import { LightningElement, wire } from 'lwc';
+import { LightningElement, wire, track } from 'lwc';
+import { refreshApex } from '@salesforce/apex';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import getFinancialAccounts from '@salesforce/apex/AccountController.getFinancialAccounts';
 
+//Display columns: Account Name, Account Owner, Phone, Website, and Annual Revenue
 const COLUMNS = [
     {
         label: 'Account Name', fieldName: 'recordUrl', type: 'url', sortable: true,
         typeAttributes: { label: { fieldName: 'name' } },
-        editable: true
+        editable: false// this column cannot be easily editable since it's actual value is URL, not an account name
     },
     {
         label: 'Account Owner', fieldName: 'ownerName', sortable: true,
         displayReadOnlyIcon: true
     },
     {
-        label: 'Phone', fieldName: 'phone', type: 'phone', editable: true
+        label: 'Phone', fieldName: 'phone', type: 'phone', editable: { fieldName: 'editable' }
     },
     {
-        label: 'Website', fieldName: 'website', type: 'url', editable: true
+        label: 'Website', fieldName: 'website', type: 'url', editable: { fieldName: 'editable' }
     },
     {
-        label: 'Annual Revenue', fieldName: 'annualRevenue', type: 'number', editable: true
-    }
-];//Account Name, Account Owner, Phone, Website, and Annual Revenue
+        label: 'Annual Revenue', fieldName: 'annualRevenue', type: 'number', editable: { fieldName: 'editable' }
+    },
+    // {
+    //     label: 'Editable', fieldName: 'editable', editable: false// just to see which records user can modify
+    // }
+];
 
+//mapping for sortable columns if it's value and label are different fields
 const FIELDNAME_SORTINGCOLUMN = {
     'recordUrl': 'name',
 }
 
 export default class FinancialServicesAccountsList extends LightningElement {
+
+    wiredAccountsResult;
     searchByNameTerm = '';
     columns = COLUMNS;
     rows = [];
-    displayedRows = [];
+    @track displayedRows = [];
 
     sortBy;
     sortDirection;
 
-    searchTerm = '';
     debounceTimer;
 
     draftValues;
 
-
+    // fetch accounts from backend
     @wire(getFinancialAccounts, { searchByNameTerm: '$searchByNameTerm' })
-    wiredAccounts({ error, data }) {
+    wiredAccounts(result) {
+        this.wiredAccountsResult = result;
+        const { error, data } = result;
         if (data) {
-            //this.columns = data.columns;
             this.rows = data.rows;
             this.displayedRows = JSON.parse(JSON.stringify(this.rows));
         } else if (error) {
@@ -63,26 +71,21 @@ export default class FinancialServicesAccountsList extends LightningElement {
         }
     }
 
+    // get actual sorting field name from map
     getSortingFieldName(field) {
         return FIELDNAME_SORTINGCOLUMN[field] ? FIELDNAME_SORTINGCOLUMN[field] : field;
     }
 
     sortData(fieldName, sortDirection) {
-        const rowsToSort = JSON.parse(JSON.stringify(this.rows));
-
+        const rowsToSort = JSON.parse(JSON.stringify(this.displayedRows));
         const isReverse = sortDirection === 'asc' ? 1 : -1;
 
-        const getValue = (data) => {
-            return data[fieldName];
-        }
-
         rowsToSort.sort((a, b) => {
-            a = getValue(a) ? getValue(a) : '';
-            b = getValue(b) ? getValue(b) : '';
+            let v1 = a[fieldName] ? a[fieldName] : '';
+            let v2 = b[fieldName] ? b[fieldName] : '';
 
-            return isReverse * ((a > b) - (b > a));
+            return isReverse * ((v1 > v2) - (v2 > v1));
         });
-
         this.displayedRows = rowsToSort;
     }
     // search methods
@@ -91,26 +94,16 @@ export default class FinancialServicesAccountsList extends LightningElement {
 
         clearTimeout(this.debounceTimer);
         this.debounceTimer = setTimeout(() => {
-            this.searchTerm = value.toUpperCase();
-            this.filterRecords();
+            this.searchByNameTerm = value;
+            refreshApex(this.wiredAccountsResult);
         }, 300);
-    }
-
-    filterRecords() {
-        if (this.searchTerm) {
-            //filter
-            const filteredRows = this.rows.filter(item => item.name?.toUpperCase().includes(this.searchTerm));
-            this.displayedRows = JSON.parse(JSON.stringify(filteredRows));
-        } else { // show all records
-            this.displayedRows = JSON.parse(JSON.stringify(this.rows));
-        }
     }
 
     //edit/save methods
     handleSave(event) {
-
+        // just a stub
     }
-
+    //utils
     showError(error) {
         const msg = error?.message || error?.body?.message || error;
         this.dispatchEvent(
